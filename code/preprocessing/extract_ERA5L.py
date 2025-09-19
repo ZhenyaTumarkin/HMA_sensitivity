@@ -60,15 +60,17 @@ num_points = len(points_df)
 expected_paths = []
 for i in range (num_points):
      expected_paths.append(f'{root}/All_glaciers/{Id}/ERA5L_at_gridpoint/{i}.parquet')
-
-
-if not any(os.path.isfile(p) for p in expected_paths):
+print('number of points EXTRAct')
+print(num_points)
+if not all(os.path.isfile(p) for p in expected_paths):
 
 
     for year in years:
             for var in vars:
                 data_paths.append(f'{root}/ERA5L/ERA5Land_HMA_{var}_{year}.nc')
     ds = xr.open_mfdataset( data_paths,chunks={'time': 17544, 'latitude':1, 'longitude':1})
+
+    
     for lon,lat in zip(lons,lats):
 
         
@@ -89,6 +91,8 @@ if not any(os.path.isfile(p) for p in expected_paths):
         df_out['t2m'] = df_out['t2m']+delta_T
         df_out['d2m'] = df_out['d2m']+delta_T
         df_out = df_out.drop(['u10','v10','longitude','latitude'],axis=1)
+
+
         df_out.to_parquet(f'{root}/All_glaciers/{Id}/ERA5L_at_gridpoint/{index}.parquet')
         index+=1 
         #print(index)

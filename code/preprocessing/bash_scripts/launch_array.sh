@@ -44,6 +44,6 @@ while IFS= read -r value; do
     first_col+=("$value")
 done < <(tail -n +4 "$csv_file" | cut -d',' -f2)
 
-rgiid=${first_col[${SLURM_ARRAY_TASK_ID}]}
+rgiid=${first_col[${SLURM_ARRAY_TASK_ID}-1]}
 
 srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/bash_scripts/preprocessing.sh $rgiid

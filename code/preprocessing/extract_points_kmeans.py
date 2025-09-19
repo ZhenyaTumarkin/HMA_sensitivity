@@ -173,19 +173,22 @@ else:
         dem1 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{minx:03d}/ASTGTMV003_N{miny}E{minx:03d}_dem.tif')
         dem2 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{(minx+1):03d}/ASTGTMV003_N{miny}E{(minx+1):03d}_dem.tif')
         region_raster , out_transform,region_meta=mergetiles([dem1,dem2],f'All_glaciers/{Id}/merged_dem.tif')
-        
+        region_raster = region_raster.squeeze()
 
+    
     elif (maxx-minx ==1) & (maxy-miny==2):   #simple edge case
-        dem1 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{minx}/ASTGTMV003_N{miny}E{minx}_dem.tif')
+        dem1 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{minx:03d}/ASTGTMV003_N{miny}E{minx:03d}_dem.tif')
         dem2 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny+1}E{minx:03d}/ASTGTMV003_N{miny+1}E{minx:03d}_dem.tif')
         region_raster , out_transform,region_meta=mergetiles([dem1,dem2],f'All_glaciers/{Id}/merged_dem.tif')
-
+        region_raster = region_raster.squeeze()
+    
     elif (maxx-minx ==2) & (maxy-miny==2):  #all 4 tiles included
         dem1 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{minx:03d}/ASTGTMV003_N{miny}E{minx:03d}_dem.tif')
         dem2 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny+1}E{minx:03d}/ASTGTMV003_N{miny+1}E{minx:03d}_dem.tif')
         dem3 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny+1}E{(minx+1):03d}/ASTGTMV003_N{miny+1}E{(minx+1):03d}_dem.tif')
         dem4 = rasterio.open(f'{path_dems}ASTGTMV003_N{miny}E{(minx+1):03d}/ASTGTMV003_N{miny}E{(minx+1):03d}_dem.tif')
         region_raster , out_transform,region_meta=mergetiles([dem1, dem2,dem3,dem4],f'All_glaciers/{Id}/merged_dem.tif')
+        region_raster = region_raster.squeeze()
     else:
         print(minx,miny,maxx,maxy)
     

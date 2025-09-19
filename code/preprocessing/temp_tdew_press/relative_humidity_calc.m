@@ -13,6 +13,7 @@ era5L_path = strcat(root,'/All_glaciers/',Id,'/ERA5L_at_gridpoint');
 
 points = readtable(point_path);
 num_points = height(points);
+disp('number of points = '); disp(num_points);
 
 for i = 1:num_points
     point_data = parquetread(strcat(era5L_path,'/',num2str(i),'.parquet'));
