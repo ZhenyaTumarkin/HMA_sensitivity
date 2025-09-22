@@ -464,8 +464,8 @@ if debris_glacier_bool:
     x_deb= utm_transform.c + x_ind_deb*clean_transform.a
     y_deb = utm_transform.f - y_ind_deb*clean_transform.a
     df_deb = pd.DataFrame({'x':x_deb,'y':y_deb,})
-    df_deb['deb_bool'] = np.zeros_like(df_deb['x']).astype(int)
-    df_deb['deb_thickness_m'] = np.ones_like(df_deb['x']).astype(int)
+    df_deb['deb_bool'] = np.ones_like(df_deb['x']).astype(int)
+    df_deb['deb_thickness_m'] = deb_th_utm[y_ind_deb,x_ind_deb]
     df_deb['elev_m'] = deb_raster[0,y_ind_deb,x_ind_deb]
     df_deb['lat'],df_deb['lon'] = utm.to_latlon(x_deb,y_deb, utm_zone_num, 'N') 
    
