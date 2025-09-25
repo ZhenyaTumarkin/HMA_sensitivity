@@ -11,6 +11,10 @@
 # Number of CPU cores to use within one node
 #SBATCH -c 1
 
+#Send emails when a job starts, it is finished or it exits
+#SBATCH --mail-user=evgeny.tumarkin@ist.ac.at
+#SBATCH --mail-type=SUBMIT,END,FAIL
+
 # Define the number of hours the job should run. 
 # Maximum runtime is limited to 10 days, ie. 240 hours
 #SBATCH --time=00-00:10
@@ -36,14 +40,24 @@ unset SLURM_EXPORT_ENV
 # in different iteration of the script execution
 #----------------------------------------------------------------
 
-csv_file="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/Glacier_list.csv"
+#read csv first
+module load matlab
+csv_file="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/run_list.csv"
 
-# Skip header if needed: tail -n +2
 first_col=()
-while IFS= read -r value; do
-    first_col+=("$value")
-done < <(tail -n +4 "$csv_file" | cut -d',' -f2)
+second_col=()
+while IFS=, read -r col1 col2 col3 _; do
+    first_col+=("$col2")
+    second_col+=("$col3")
+done < <(tail -n +2 "$csv_file")
+
+
 
 rgiid=${first_col[${SLURM_ARRAY_TASK_ID}-1]}
+point_id=${second_col[${SLURM_ARRAY_TASK_ID}-1]}
 
-srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/bash_scripts/preprocessing.sh $rgiid
+srun --cpu_bind=verbose matlab -nodesktop -nojvm -nosplash -r "clear all;\
+glacier_id='$rgiid'; point_id='$point_id';\
+run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model/Launcher_point.m');\
+exit;"
+

@@ -40,4 +40,4 @@ export OMP_NUM_THREADS=1
 #
 #
 #run the respective binary through SLURM's srun
-srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/bash_scripts/preprocessing.sh "RGI60-13.18096"
+srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/bash_scripts/preprocessing.sh "RGI60-13.18096"
