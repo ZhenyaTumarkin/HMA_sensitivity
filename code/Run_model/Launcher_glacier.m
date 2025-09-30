@@ -8,32 +8,39 @@ run_path   = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model';
 % glacier_id = 'RGI60-13.19847';
 % point_id = 9; 
 
-point_id = str2num(point_id);
+
 
 
 
 
 data_path  = strcat('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/All_glaciers/',glacier_id);
-
+points_all = readtable([data_path '/coords_out_' glacier_id '.csv'])
+num_points = height(points_all)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 study_name = 'single_point_run';
 
 % How to store outputs %%%%
 output_daily = 1;  % Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
-
-
+% Study site details
+FORCING = "ERA5Land";
+t_bef = 0.5; t_aft = 0.5;
 %%%
 glacier_points = readtable(strcat(data_path,'/coords_out_',glacier_id,'.csv'));
+Tmod = 0; % temperature modification above clean ice [°C];
+Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
+% Skin layer thickness:
+hSTL = 0.003; %m
 
+% Albedo scheme choice
+Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
+ 
+for point_id = 1:1:num_points
+    disp(point_id)
 Lat = glacier_points.lat(point_id);
 Lon = glacier_points.lon(point_id);
 
 
-
-
-% Study site details
-FORCING = "ERA5Land";
 
 
 %%%%%choose utm zone
@@ -49,7 +56,7 @@ UTM_zone = int32(utm_border+31);
 point_lon = (360-glacier_points.lon(point_id));   % DEGREES WEST!
 DeltaGMT=timezone(point_lon);
 
-t_bef = 0.5; t_aft = 0.5;
+
   
 % Select simulation period (start and end)
 % x1s =  "01-Jul-2021 00:00:00"; % Starting point of the simulation
@@ -59,8 +66,7 @@ t_bef = 0.5; t_aft = 0.5;
 
 elevation = glacier_points.elev_m(point_id);
 
-Tmod = 0; % temperature modification above clean ice [°C];
-Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
+
 
 
 %%%%%should read in as metadata!!!!
@@ -79,12 +85,7 @@ parameterize_phase.Tmax = 2; % Upper air temperature for dual temperature thresh
 parameterize_phase.Tmin = 0; % Lower air temperature for dual temperature threshold
 parameterize_phase.Tconst = 2; % Air temperature for constant thresholds
 
-% Skin layer thickness:
-hSTL = 0.003; %m
 
-% Albedo scheme choice
-Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
- 
 
 
 
@@ -557,11 +558,5 @@ end
 parquetwrite( strcat(outlocation,'/',num2str(point_id),'_results.parquet'),Outputs_t)
 writetable(Param_t, strcat(outlocation,'/',num2str(point_id),'_param.txt') )
 
+end
 
-%% Quick run evaluation
-
-%%%%%% plot output 
-fi1 = figure('Renderer', 'painters', 'Position', [141.6667 244.3333 920.0000 370.6667]);
-
-plot(Outputs_t.Date,Outputs_t.SND)
-title(['ERA5L forcing + TA @ GP ' num2str(point_id)])

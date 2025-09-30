@@ -7,16 +7,24 @@ run_path   = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model';
 
 % glacier_id = 'RGI60-13.19847';
 % point_id = 9; 
-
+%precip_tune = 0.5;   %factor to multiply precipitation by
 point_id = str2num(point_id);
-
-
-
-
 data_path  = strcat('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/All_glaciers/',glacier_id);
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%read in precipitation modification
+tp_calib_path = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/' glacier_id '/tp_calib.csv'];
+if isfile(tp_calib_path)
+    p_mod_file = readtable(tp_calib_path);
+    disp(p_mod_file)
+    precip_tune= p_mod_file.next_p(end);
+else
+    precip_tune=1;
+end
+disp(['precipitation factor ' num2str(precip_tune)])
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 study_name = 'single_point_run';
 
 % How to store outputs %%%%
@@ -90,9 +98,9 @@ Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
 
 
 % Create the directy where model outputs will be stored
-outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/' glacier_id];
+outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
-out = strcat(outlocation,'/point_run.mat');%file path initial conditions
+out = strcat(outlocation,'/point_run_',num2str(point_id),'.mat');%file path initial conditions
 
 
 %dependencies
@@ -270,7 +278,7 @@ Ameas = zeros(NN,1);
 N=forcing.Lwin; Latm=forcing.Lwin;
 
 % Precipitation
-Pr=forcing.PP;Pr(isnan(Pr))=0; Pr(Pr<0.01)=0;
+Pr=forcing.PP*precip_tune;Pr(isnan(Pr))=0; Pr(Pr<0.01)=0;
 
 % if Pmod >0
 %   Pr = Pr.*Pmod_S(ij);
@@ -491,7 +499,7 @@ md_max = 10;
 num_cell = 1; m_cell =1; n_cell=1;
 MASKn = [1];
 GLH = [100];
-SNOWD = [1];
+SNOWD = [1]; %%%% 1m is probably too thick!!!
 SNOWALB = [0.6];
 cellsize = 100;
 Psan= 0.5;Pcla= 0.1;Porg = 0;

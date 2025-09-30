@@ -8,7 +8,7 @@ glacier_list = pd.read_csv(f'{root_data}/Glacier_list.csv',header = 2)
 
 
 run_list = pd.DataFrame({'glacier_id':[],'point_id':[]})
-for glacier in glacier_list['RGI index'].iloc[:2]:
+for glacier in glacier_list['RGI index'].iloc[:1]:
     point_list =  pd.read_csv(f'{root_data}/All_glaciers/{glacier}/coords_out_{glacier}.csv',header = 1)
     num_points = len(point_list)
     points = np.arange(1,num_points +1,1)

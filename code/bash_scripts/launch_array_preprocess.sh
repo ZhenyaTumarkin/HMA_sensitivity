@@ -17,12 +17,12 @@
 
 # Define the number of hours the job should run. 
 # Maximum runtime is limited to 10 days, ie. 240 hours
-#SBATCH --time=00-00:10
+#SBATCH --time=00-00:50
 #SBATCH --constraint=matlab
 
 # Define the amount of RAM used by your job in GigaBytes
 # In shared memory applications this is shared among multiple CPUs
-#SBATCH --mem=4G
+#SBATCH --mem=20G
 
 # Do not requeue the job in the case it fails.
 #SBATCH --no-requeue
@@ -49,7 +49,7 @@ csv_file="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/G
 first_col=()
 while IFS= read -r value; do
     first_col+=("$value")
-done < <(tail -n +4 "$csv_file" | cut -d',' -f2)
+done < <(tail -n +4 "$csv_file" | cut -d',' -f2)    #
 
 rgiid=${first_col[${SLURM_ARRAY_TASK_ID}-1]}
 

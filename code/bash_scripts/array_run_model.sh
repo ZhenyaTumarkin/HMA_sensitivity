@@ -31,14 +31,7 @@
 #SBATCH --export=NONE
 unset SLURM_EXPORT_ENV
 
-# load the respective software module(s) you intend to use
-#----------------------------------------------------------------
-# none needed for this example
 
-# define sequence of jobs to run as you would do in a BASH script
-# use variable $SLURM_ARRAY_TASK_ID to address individual behaviour
-# in different iteration of the script execution
-#----------------------------------------------------------------
 
 #read csv first
 module load matlab

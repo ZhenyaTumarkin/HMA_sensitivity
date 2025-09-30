@@ -82,7 +82,7 @@ if not all(os.path.isfile(p) for p in expected_paths):
 
     for year in years:
             for var in vars:
-                data_paths.append(f'{root}/ERA5L/ERA5Land_HMA_{var}_{year}.nc')
+                data_paths.append(f'{root}/ERA5L/{year}/ERA5Land_HMA_{var}_{year}.nc')
     ds = xr.open_mfdataset( data_paths,chunks={'time': -1, 'latitude':1, 'longitude':1},parallel = False)  #the chunking is extremely important, 
                                                                                                             #reduce overhead by chunking to single points
                                                                                                             # so in next step, only one chunk needs to be loaded to extract the data

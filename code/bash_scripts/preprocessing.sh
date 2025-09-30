@@ -4,8 +4,8 @@
 module load miniforge3
 module load matlab
 
-datemin="2019:07:01:00:00:00"   #"$2"   #"2021:02:28:05:00:00"   YYYY:MM:DD:HH:MM:SS   TIME UTC
-datemax="2020:08:31:23:00:00"    #"$3"
+datemin="2000:09:01:00:00:00"   #"$2"   #"2021:02:28:05:00:00"   YYYY:MM:DD:HH:MM:SS   TIME UTC
+datemax="2004:12:25:23:00:00"    #"$3"
 
 rgiid="$1"
 
