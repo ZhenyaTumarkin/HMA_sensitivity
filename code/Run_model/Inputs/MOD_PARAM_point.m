@@ -448,6 +448,7 @@ if OPT_SoilBiogeochemistry == 1
 end
 %%%
 
+
 %%%%%%%%%%% Initial conditions Hydrology/non-Vegetation %%%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 SWE(1)=SWEtm1(ij); %% [mm]

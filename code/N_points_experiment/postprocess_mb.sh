@@ -1,24 +1,21 @@
 #!/bin/bash
-#
-#-------------------------------------------------------------
-#example script for running a single-CPU serial job via SLURM
-#-------------------------------------------------------------
-#
-#SBATCH --job-name=Preprocess_One_Glac
-#SBATCH --output=/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/outlog/Glaconetest-%j.log   
+#  source /nfs/scistore18/pelligrp/etumarki/.conda/envs
+
+#SBATCH --job-name=postprocess
+#SBATCH --output=/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/outlog/post_mb-%j.log   
 #            %j is a placeholder for the jobid
 #
-#SBATCH --constraint=matlab
+
 #Define the number of hours the job should run. 
 #Maximum runtime is limited to 10 days, ie. 240 hours
 #SBATCH --time=00-00:10
 #
 #Define the amount of RAM used by your job in GigaBytes
-#SBATCH --mem=100G
+#SBATCH --mem=1G
 #
 #Send emails when a job starts, it is finished or it exits
-# #SBATCH --mail-user=evgeny.tumarkin@ist.ac.at
-# #SBATCH --mail-type=SUBMIT,END,FAIL
+#SBATCH --mail-user=evgeny.tumarkin@ist.ac.at
+#SBATCH --mail-type=SUBMIT,END,FAIL
 #
 #Pick whether you prefer requeue or not. If you use the --requeue
 #option, the requeued job script will start from the beginning, 
@@ -30,24 +27,16 @@
 #
 #Do not export the local environment to the compute nodes
 #SBATCH --export=NONE
-# Number of CPU cores to use within one node
-#SBATCH -c 30
 unset SLURM_EXPORT_ENV
 #
-
 #for single-CPU jobs make sure that they use a single thread
-export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
+export OMP_NUM_THREADS=1
 #
 #load the respective software module you intend to use
-module load matlab
+module load miniforge3
+conda activate HMA
 #
 #
 #run the respective binary through SLURM's srun
-rgiid="RGI60-13.19847"
-
-
-
-srun --cpu_bind=verbose  matlab -nodesktop -nojvm -nosplash -r "clear all;\
-glacier_id='$rgiid';\
-run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model/Launcher_glacier.m');\
-exit;"
+echo "$n_point"
+srun --cpu_bind=verbose  python /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/N_points_experiment/postprocess_MB.py --run_name $n_point

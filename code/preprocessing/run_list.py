@@ -1,6 +1,12 @@
 import pandas as pd
 import numpy as np 
 import os
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--glaciers',type=int,required = True,help = 'input number of glaciers')
+args = parser.parse_args()
+glaciers = args.glaciers
 
 
 root_data = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
@@ -8,11 +14,17 @@ glacier_list = pd.read_csv(f'{root_data}/Glacier_list.csv',header = 2)
 
 
 run_list = pd.DataFrame({'glacier_id':[],'point_id':[]})
-for glacier in glacier_list['RGI index'].iloc[:1]:
+if glaciers == 1:
+    glacier_list =  [glacier_list['RGI index'].iloc[0]]
+else:
+    glacier_list =  glacier_list['RGI index'].iloc[:glaciers-1]
+
+
+for glacier in glacier_list:
     point_list =  pd.read_csv(f'{root_data}/All_glaciers/{glacier}/coords_out_{glacier}.csv',header = 1)
     num_points = len(point_list)
     points = np.arange(1,num_points +1,1)
-    print(points)
+    
     point_df = pd.DataFrame({'point_id':points})
     
     point_df['glacier_id'] = glacier

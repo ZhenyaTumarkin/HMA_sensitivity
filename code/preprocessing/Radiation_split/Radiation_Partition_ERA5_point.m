@@ -1,27 +1,21 @@
 %%%%%%%%%%%%%%%%%%%%%%
 %Adapted from Achille's 'Radiatn_Partition_ERA5_arr'
+%partitions radiation at a singular glacier, iterating through all points in series
+%Ta and Tdew of forcing must be in kelvin (converted to degC here)
+%Surface Pressure also converted to mbar
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % close all; clc;delete(gcp('nocreate'));
 tic
 
-% glacier_id = 'RGI60-15.07886'; defined in bash script
+% glacier_id = 'RGI60-15.07886'; defined in bash script!!!!
 data_root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing';
 code_root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing';
 point_path =  strcat(data_root,'/All_glaciers/',glacier_id,'/coords_out_',glacier_id,'.csv');
 points = readtable(point_path);
 num_points = height(points);
 
-% glacier_id = 'RGI60-15.07886';
 
-% x1=datetime('01-Oct-2019 00:00:00');
-% x2=datetime('30-Sep-2020 23:00:00');
-
-
-
-% ncor = feature('numcores');
-% disp(ncor)
-% parpool('local',4);
 
 
 points_data = readtable(strcat(data_root, '/All_glaciers/',glacier_id, '/coords_out_',glacier_id,'.csv'));
@@ -32,10 +26,7 @@ points_all = 1:num_points;
 
 
 
-% Add path for meteorological forcing and DEM
-
-
-        
+% Add path for meteorological forcing 
 forcing_location = strcat(data_root,'All_glaciers/',glacier_id);
 addpath(genpath(strcat(data_root,forcing_location)))
 %addpath(genpath([code_root 'Radiation_split/TC_Preprocessing_Functions']))
@@ -96,7 +87,7 @@ PARD = PARD.';
 
 LWIN = era5_data.strd;
 
-TA  = era5_data.t2m  - 273.15;
+TA  = era5_data.t2m  - 273.15; % convert to units required for T&C model
 Sp = era5_data.sp / 100;
 Ws = era5_data.Ws;
 time = era5_data.time;

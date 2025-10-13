@@ -5,8 +5,8 @@
 
 ##  Defining options for slurm how to run
 #----------------------------------------------------------------
-#SBATCH --job-name=Glacier_arr_preprocess_test
-#SBATCH --output=/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/outlog/Glaconetes_%A-%a.log 
+#SBATCH --job-name=Preprocess
+#SBATCH --output=/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/outlog/Preprocessing_%A-%a.log 
 # %A and %a are placeholders for the jobid and taskid, resp.
 # Number of CPU cores to use within one node
 #SBATCH -c 1
@@ -17,12 +17,12 @@
 
 # Define the number of hours the job should run. 
 # Maximum runtime is limited to 10 days, ie. 240 hours
-#SBATCH --time=00-00:50
+#SBATCH --time=00-00:30
 #SBATCH --constraint=matlab
 
 # Define the amount of RAM used by your job in GigaBytes
 # In shared memory applications this is shared among multiple CPUs
-#SBATCH --mem=20G
+#SBATCH --mem=4G
 
 # Do not requeue the job in the case it fails.
 #SBATCH --no-requeue
@@ -53,4 +53,4 @@ done < <(tail -n +4 "$csv_file" | cut -d',' -f2)    #
 
 rgiid=${first_col[${SLURM_ARRAY_TASK_ID}-1]}
 
-srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/bash_scripts/preprocessing.sh $rgiid
+srun --cpu_bind=verbose  bash /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/bash_scripts/preprocessing.sh $rgiid $num_points $outlocation

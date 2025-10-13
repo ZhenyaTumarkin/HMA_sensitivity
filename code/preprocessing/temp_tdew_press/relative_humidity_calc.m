@@ -1,4 +1,4 @@
-%relative humidity
+%Convert dew point temp to relative humidity
 tic
 
 

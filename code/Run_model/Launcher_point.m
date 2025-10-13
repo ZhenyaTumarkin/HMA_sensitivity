@@ -1,4 +1,4 @@
-
+% feature('DisableExternalDDUX', 1);   %%%%stop sending data to mathworks (can apparently stop some crashes)
 %%%%%%%% LINES TO BE CHANGED %%%%%%%%
 
 model_path = '/nfs/scistore18/pelligrp/etumarki/TeC_code'; % Put here the path of where you downloaded the repository
@@ -37,9 +37,6 @@ glacier_points = readtable(strcat(data_path,'/coords_out_',glacier_id,'.csv'));
 Lat = glacier_points.lat(point_id);
 Lon = glacier_points.lon(point_id);
 
-
-
-
 % Study site details
 FORCING = "ERA5Land";
 
@@ -67,9 +64,8 @@ t_bef = 0.5; t_aft = 0.5;
 
 elevation = glacier_points.elev_m(point_id);
 
-Tmod = 0; % temperature modification above clean ice [°C];
-Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
-
+% Tmod = 0; % temperature modification above clean ice [°C];
+% Pmod = 0; % factor Pmod preciptation modification, e.g. 0.3 means 30% more precipitation at highest elevation
 
 %%%%%should read in as metadata!!!!
 % Z_min = 3370; % lowest elevation for linear precipitation modification (min factor -> 0)
@@ -94,25 +90,20 @@ hSTL = 0.003; %m
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
  
 
-
-
-
 % Create the directy where model outputs will be stored
-outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
+
+if ~exist('outlocation','var')
+    disp('standard_out_loc chosen: data/Outputs/')
+    outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
+end
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 out = strcat(outlocation,'/point_run_',num2str(point_id),'.mat');%file path initial conditions
-
+disp(outlocation)
 
 %dependencies
 addpath(genpath([run_path,'/Inputs/'])); % Where are distributed model set-up files (needed ? yes to load dtm)
 addpath(genpath([model_path, '/Inputs'])); % Add path to Ca_Data
 addpath(genpath([model_path, '/T&C_Code'])); % Add path to T&C codes
-
-% load(dtm_file); % Distributed maps pre-processing. Useful here to get the DTM and initial snow depth
-% DTM = DTM_orig; % Use the full DEM in case running POI outside of mask
-
-% Precipitation vertical gradient
-
 
 
 
@@ -232,48 +223,6 @@ zatm_hourly_on=0;
 
 %load all forcing data
 Ameas = zeros(NN,1);
-
-
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% force_meas = load('/home/zhenya/Documents/ISTA/TC_test/TeC_Source_Code/Case_study/Kyzylsu_pointscale/Forcing/AWS_OnGlacier.mat'); % Load forcing table for the current POI
-% 
-% %fetch time and do date handling
-% Date_all=force_meas.forcing_all.Time; 
-% %define period and time zone info
-% x1=find(date_start == Date_all,1);
-% x2=find(date_end == Date_all,1);
-% forcing_meas = force_meas.forcing_all(x1:x2,:);
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-
-%%%%try Lwin mod, kok et al 2019, doi/10.1002/joc.6249
-% % % 
-% % % sig = 5.670374419e-8;
-% % % mask_cle_d = (forcing.RH<60)&(forcing.SAD1>0.001);  %clear
-% % % mask_cle_n = (forcing.RH<80)&(forcing.SAD1<=0.001);
-% % % mask_clo_d = (forcing.RH>=60)&(forcing.SAD1>0.001);
-% % % mask_clo_n = (forcing.RH>=80)&(forcing.SAD1<=0.001);
-% % % masks_clo = [mask_clo_n,mask_clo_d];
-% % % masks_cle = [mask_cle_n,mask_cle_d];
-% % % 
-% % % c1 = -75.28;c2 = 0.82;c3 = 0.79;
-% % % for mask = masks_cle
-% % % forcing.Lwin(mask) = c1+c2*forcing_meas.RH(mask)/100+c3*sig*(forcing_meas.TA(mask)+273.15).^4;
-% % % end
-% % % 
-% % % c1 = -212.59;c2 = 1.89;c3 = 1.06;
-% % % for mask = masks_clo
-% % % forcing.Lwin(mask) = c1+c2*forcing_meas.RH(mask)/100+c3*sig*(forcing_meas.TA(mask)+273.15).^4;
-% % % end
-%%%%%%%%%%%%%%%%%
-
 
 N=forcing.Lwin; Latm=forcing.Lwin;
 
@@ -468,20 +417,7 @@ zatm = max(zatm_surface(II)); %choose correct atmospheric reference height
 
 
 
-%%% SOIL
-% % % % PSAN=reshape(PSAN/100,num_cell,1); Psan = PSAN(ij); % Soil sand content at pixel ij
-% % % % PCLA=reshape(PCLA/100,num_cell,1); Pcla = PCLA(ij); % Soil clay content at pixel ij
-% % % % PORG=reshape(PORG/100,num_cell,1); Porg= PORG(ij); % Soil organic content at pixel ij
-% % % % 
-ms=10 ; %% 11 ; 
-% % % % SOIL_TH=reshape(SOIL_TH,num_cell,1);
-ms_max = 10; %% Number of soil layers
 
-
-
-
-%%% DEBRIS
-md_max = 10;
 
 
 
@@ -495,7 +431,12 @@ md_max = 10;
 %     SNOWALB=reshape(SNOWALB,num_cell,1);
 % end 
 
-%% INITIAL CONDITIONS AND PARAMETERS (run this only once in MultiPoint mode!)
+%% INITIAL CONDITIONS AND PARAMETERS 
+%%% SOIL
+ms=10 ; %% 11 ; 
+ms_max = 10; %% Number of soil layers
+%%% DEBRIS
+md_max = 10;
 num_cell = 1; m_cell =1; n_cell=1;
 MASKn = [1];
 GLH = [100];
@@ -505,8 +446,6 @@ cellsize = 100;
 Psan= 0.5;Pcla= 0.1;Porg = 0;
 SOIL_TH = [200];
 ij=1;
-
-
 dbThick=glacier_points.deb_thickness_m(point_id)*1000;  %% [mm]
 
 % if exist(out, 'file') == 2      %ADD BACK IN AFTER TESTING
@@ -523,14 +462,19 @@ PARAM_IC = strcat(cd,'/Inputs/MOD_PARAM_point.m');
 
 
 
+
+
 %% RUN MODEL
 disp('starting_sim')
 MAIN_FRAME; % Launch the main frame of T&C. Most of the things happen in this line of code
 disp('ending_sim')
-Date_R = char(Date);%make date useable for R
+
+
+
+
+
 
 %% Output manager
-
 Param_t = table(Lat,Lon,Zbas,dbThick,'VariableNames',{'Lat','Lon','Zbas','dbThick'});
 Param_t = [Param_t, struct2table(SnowIce_Param), struct2table(Deb_Par)];
 Param_t = rows2vars(Param_t);
@@ -569,7 +513,7 @@ writetable(Param_t, strcat(outlocation,'/',num2str(point_id),'_param.txt') )
 %% Quick run evaluation
 
 %%%%%% plot output 
-fi1 = figure('Renderer', 'painters', 'Position', [141.6667 244.3333 920.0000 370.6667]);
+% fi1 = figure('Renderer', 'painters', 'Position', [141.6667 244.3333 920.0000 370.6667]);
 
-plot(Outputs_t.Date,Outputs_t.SND)
-title(['ERA5L forcing + TA @ GP ' num2str(point_id)])
+% plot(Outputs_t.Date,Outputs_t.SND)
+% title(['ERA5L forcing + TA @ GP ' num2str(point_id)])
