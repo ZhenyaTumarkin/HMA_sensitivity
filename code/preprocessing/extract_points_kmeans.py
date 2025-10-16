@@ -287,8 +287,10 @@ if debris_glacier_bool:
 
     area_debris = len(deb_raster[deb_raster>0])
     area_clean = len(clean_raster[clean_raster>0])
-    points_clean = round(area_clean/(area_clean+area_debris)*N_points)
-    points_deb = round(area_debris/(area_clean+area_debris)*N_points)
+    clean_weight = area_clean/(area_clean+area_debris)
+    deb_weight = area_debris/(area_clean+area_debris)
+    points_clean = round(clean_weight*N_points)
+    points_deb = round(deb_weight*N_points)
       
     if points_deb < 1:
         points_deb = 1
@@ -305,7 +307,7 @@ else:
 #################################################
 #now create numpy array with inputs to the Kmeans clustering alg
 #################################################
-def cluster_alg(num_points,weighted_input,mask_nan,raster): 
+def cluster_alg(num_points,weighted_input,mask_nan,raster,land_class_weight): 
     '''
     inputs: 
     num_points = number of clusters to make
@@ -340,9 +342,9 @@ def cluster_alg(num_points,weighted_input,mask_nan,raster):
     mask_max_area = df_polygons.groupby('class_list')['area_list'].idxmax()   #in each cluster type, find the largest polygon by area
     #print(mask_max_area)
     polygons_max = np.array(polygons_list)[mask_max_area]    ##select the largest polygon in each cluster
-    cluster_total_area = df_polygons.groupby('class_list')['area_list'].sum() 
-    weight = np.array(cluster_total_area/total_area)   #find weight
-    
+    # cluster_total_area = df_polygons.groupby('class_list')['area_list'].sum() 
+    # weight = np.array(cluster_total_area/total_area)   #find weight
+    weights_new = np.array(np.bincount(labels_valid, minlength=num_points))
 
     x_ind = np.full(num_points,0)
     y_ind = np.full(num_points,0)
@@ -360,10 +362,13 @@ def cluster_alg(num_points,weighted_input,mask_nan,raster):
         else:
             print('point_discarded')
             
-    #print(x_ind)
-    #mask_zero = (x_ind!=0)&(y_ind!=0)
     
-    return x_ind,y_ind,labels_grid,weight
+    mask_zero = (x_ind!=0)&(y_ind!=0)
+    weight_masked = (weights_new)[mask_zero]
+    normalised_weight = weight_masked/np.sum(weight_masked)*land_class_weight
+    return x_ind[mask_zero],y_ind[mask_zero],labels_grid,normalised_weight
+
+    
    
 
 
@@ -394,7 +399,7 @@ weights = [5,1,1]  # elevation, x,y
 weighted_input_clean = np.multiply(scaled_matrix.T,np.array([weights]))
 
 
-x_ind_clean,y_ind_clean,labels_clean,weight_clean = cluster_alg(points_clean,weighted_input_clean,mask_nan,clean_raster[0])
+x_ind_clean,y_ind_clean,labels_clean,weight_clean = cluster_alg(points_clean,weighted_input_clean,mask_nan,clean_raster[0],clean_weight)
 
 x_clean = utm_transform.c + x_ind_clean*clean_transform.a   #deal with python's/rasterio's way of handling copordinates
 y_clean = utm_transform.f - y_ind_clean*clean_transform.a
@@ -424,7 +429,7 @@ if debris_glacier_bool:
 
 
     weighted_input_deb = np.multiply(scaled_matrix.T,np.array([weights]))
-    x_ind_deb,y_ind_deb,labels_deb,weight_deb = cluster_alg(points_deb,weighted_input_deb,mask_nan,deb_raster[0])
+    x_ind_deb,y_ind_deb,labels_deb,weight_deb = cluster_alg(points_deb,weighted_input_deb,mask_nan,deb_raster[0],deb_weight)
 
     x_deb= utm_transform.c + x_ind_deb*clean_transform.a
     y_deb = utm_transform.f - y_ind_deb*clean_transform.a
