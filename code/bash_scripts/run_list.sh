@@ -38,4 +38,5 @@ conda activate HMA
 #
 #
 #run the respective binary through SLURM's srun
-srun --cpu_bind=verbose  python /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/run_list.py --glaciers 1
+echo "$outlocation"
+srun --cpu_bind=verbose  python /nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/run_list.py --glaciers 15 --outlocation $outlocation

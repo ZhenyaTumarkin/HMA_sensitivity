@@ -9,16 +9,23 @@
 tic
 
 % glacier_id = 'RGI60-15.07886'; defined in bash script!!!!
-data_root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing';
+
+
+if exist('outlocation', 'var')
+    data_root =strcat(outlocation);
+else
+    data_root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing';
+end
+
 code_root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing';
-point_path =  strcat(data_root,'/All_glaciers/',glacier_id,'/coords_out_',glacier_id,'.csv');
+point_path =  strcat(data_root,'/Forcing_data/',glacier_id,'/coords_out_',glacier_id,'.csv');
 points = readtable(point_path);
 num_points = height(points);
 
 
 
 
-points_data = readtable(strcat(data_root, '/All_glaciers/',glacier_id, '/coords_out_',glacier_id,'.csv'));
+points_data = readtable(strcat(data_root, '/Forcing_data/',glacier_id, '/coords_out_',glacier_id,'.csv'));
 
 points_length=size(points_data,1);
 points_all = 1:num_points;
@@ -27,7 +34,7 @@ points_all = 1:num_points;
 
 
 % Add path for meteorological forcing 
-forcing_location = strcat(data_root,'All_glaciers/',glacier_id);
+forcing_location = strcat(data_root,'Forcing_data/',glacier_id);
 addpath(genpath(strcat(data_root,forcing_location)))
 %addpath(genpath([code_root 'Radiation_split/TC_Preprocessing_Functions']))
 addpath(genpath([code_root 'Radiation_split']))
@@ -49,7 +56,7 @@ elev = points_data.elev_m(point_num);
 % disp(['Partitionning SWin at ' glacier_id ' at point ' string(point_num) ' from ' datestr(x1,'dd-mmm-yyyy HH:MM') ' to '...
 %     datestr(x2,'dd-mmm-yyyy HH:MM')])
 
-era5_data = parquetread(strcat(data_root,'/All_glaciers/',glacier_id,'/ERA5L_RH/', string(point_num), '.parquet'));
+era5_data = parquetread(strcat(data_root,'/Forcing_data/',glacier_id, '/', string(point_num), '.parquet'));
 
 
 Date = era5_data.time;
@@ -78,6 +85,7 @@ DateHR = datetime(Datam_start):hours(1):datetime(Datam_end);
 
 
 [SAD1,SAD2,SAB1,SAB2,PARB,PARD]=Automatic_Radiation_Partition_fast(datenum(DateHR),Lat,Lon,elev,DeltaGMT,squeeze(PP),squeeze(Tdew)-273.15,squeeze(Swin),1,0);
+
 SAD1=SAD1.';
 SAD2 = SAD2.';
 SAB1 = SAB1.';
@@ -95,7 +103,7 @@ RH = era5_data.RH;
 
 
 out_data =  table(time,PP,Ws,Sp,LWIN,RH,TA,SAD1,SAD2,SAB1,SAB2,PARB,PARD);
-parquetwrite(strcat(data_root,'/All_glaciers/',glacier_id,'/ERA5L_radiation_partitioned/',string(point_num), '.parquet'),out_data)
+parquetwrite(strcat(data_root,'/Forcing_data/',glacier_id,'/',string(point_num), '.parquet'),out_data)
 %writetable(out_data,strcat(data_root,'/All_glaciers/',glacier_id,'/ERA5L_radiation_partitioned/',string(point_num), '.dat'),'WriteRowNames',true)
 end
 % T = table(string(DateHR(:)), 'VariableNames', {'Date_time'});

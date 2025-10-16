@@ -44,7 +44,7 @@ import os
 
 t1 = time.time()
 
-root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
+
 
 
 #parse rgiid input
@@ -58,7 +58,11 @@ N_points = args.N_points
 outlocation = args.outlocation
 print(f'Glacier Id : {Id}')
 
-
+inputs_path='/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
+if outlocation:
+    root=f'{outlocation}'
+else:
+    root = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
 # N_points=30   #make this an input 
 
 
@@ -76,10 +80,10 @@ region_names = {
 region_name= region_names[str(region_num)]
 
 
-geo_df = gpd.read_file(f'{root}/{region_num}_rgi60_{region_name}/{region_num}_rgi60_{region_name}.shp')  #read region shp
-debris_thick_path =f'{root}/Rounce2021_deb_thick/{region_num}/{Id_num}_hdts_m.tif'  #path for glacier debris thickness
-debris_extrap_thick_path = f'{root}/Rounce2021_deb_thick/{region_num}/{Id_num}_hdts_m_extrap.tif' #path for glacier extrapolated debris thickness
-path_dems = f'{root}/ASTER_DEM/'   #folder with dems
+geo_df = gpd.read_file(f'{inputs_path}/{region_num}_rgi60_{region_name}/{region_num}_rgi60_{region_name}.shp')  #read region shp
+debris_thick_path =f'{inputs_path}/Rounce2021_deb_thick/{region_num}/{Id_num}_hdts_m.tif'  #path for glacier debris thickness
+debris_extrap_thick_path = f'{inputs_path}/Rounce2021_deb_thick/{region_num}/{Id_num}_hdts_m_extrap.tif' #path for glacier extrapolated debris thickness
+path_dems = f'{inputs_path}/ASTER_DEM/'   #folder with dems
 
 
 
@@ -495,19 +499,12 @@ if show_result:  # plot results
 
 #####write results to file
 try:
-    if outlocation:
-        print('out!!! extract')
-        file_names =  [f'{root}/All_glaciers/{Id}/coords_out_{Id}.csv' ,f'{outlocation}/coords_out_{Id}.csv']
-        print(outlocation)
-        os.mkdir(f'{outlocation}')
-    else:
-        file_names = [f'{root}/All_glaciers/{Id}/coords_out_{Id}.csv']
-    for file_name in file_names:
-        print(file_name)
-        file =  open(file_name,'w')
-        file.write(f'UTM used,{dst_crs}\n')
-        file.close()
-        df_out.to_csv(file_name, mode='a',header = True,  index=False)
+    
+    file_name=f'{root}/Forcing_data/{Id}/coords_out_{Id}.csv'
+    file =  open(file_name,'w')
+    file.write(f'UTM used,{dst_crs}\n')
+    file.close()
+    df_out.to_csv(file_name, mode='a',header = True,  index=False)
 except FileNotFoundError:
     print('out_file_not_in_list (extract_points_kmeans.py)')
 

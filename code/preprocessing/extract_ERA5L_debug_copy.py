@@ -31,14 +31,14 @@ parser.add_argument('--rgiid',type=str,required = True,help = 'input RGIId')
 parser.add_argument('--datemin',type=str,required = True,help = 'input start date')  #dates in UTC!!!!
 parser.add_argument('--datemax',type=str,required = True,help = 'input end date')
 parser.add_argument('--outlocation',type=str,required = False,help = 'outlocation')
-
 args = parser.parse_args()
 mindate = args.datemin
 maxdate = args.datemax
 Id = args.rgiid
 outlocation=args.outlocation
 
-inputs_path='/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
+
+input_path='/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing'
 if outlocation:
     root=f'{outlocation}'
 else:
@@ -58,20 +58,20 @@ minyr = int((mindate_dt-datetime.timedelta(hours=12)).year)  #-1 day to make sur
 maxyr = int((maxdate_dt+datetime.timedelta(hours=12)).year)  
 
 
-glaciers = pd.read_csv(f'{inputs_path}/Glacier_list.csv',header = 2)
+glaciers = pd.read_csv(f'{input_path}/Glacier_list.csv',header = 2)
 
 glaciers = glaciers[glaciers['RGI index'] == Id]
-height = xr.load_dataset(f'{inputs_path}/ERA5L/geopotential.nc')
+height = xr.load_dataset(f'{input_path}/ERA5L/geopotential.nc')
 g = 9.80665      # grav accell
 M = 0.02896968   #molar mass of dry air (in kg)
 R = 8.314462618  #gas constant J/(mol*K)
 height['z'] = height.z/9.80665
+lapse_rate = -6.5 #deg/km
 
-
-def barometric_p(P,dh,T,lapse_rates):
-    a = T/(T+lapse_rates*(dh))    
-    b = (g*M)/(R*lapse_rates)
-    return P*(a)**b
+def barometric_p(P,dh,T):
+    a = lapse_rate*dh/(1000*T)    #convert to m
+    b = -(g*M)/(R*lapse_rate/1000)
+    return P*(1+a)**b
 
 
 years = np.arange(minyr,maxyr+1,1)
@@ -94,24 +94,20 @@ print(num_points)
 
 data_paths =[]
 #if not all(os.path.isfile(p) for p in expected_paths):   #check if this step had already been completed
-lapse_rates_map = xr.open_dataset(f'{inputs_path}/ERA5L/ERA5_Monthly_Hourly_Lapse_Rates_HMA_2000-2010.nc')
-
+lapse_rates_map = xr.open_dataset(f'{input_path}/ERA5L/ERA5_Monthly_Hourly_Lapse_Rates_HMA_2000-2010.nc')
 if True:
     for year in years:   # 
             for var in vars:
-                data_paths.append(f'{inputs_path}/ERA5L/{year}/ERA5Land_HMA_{var}_{year}.nc')
+                data_paths.append(f'{input_path}/ERA5L/{year}/ERA5Land_HMA_{var}_{year}.nc')
     ds = xr.open_mfdataset( data_paths,chunks={'time': -1, 'latitude':1, 'longitude':1},parallel = False)  #the chunking is extremely important, 
                                                                                                             #reduce overhead by chunking to single points
                                                                                                             # so in next step, only one chunk needs to be loaded to extract the data
 
     
     for lon,lat in zip(lons,lats):   #iterate for each point
-
         point_pos = [lat,lon]  #lat,lon
         lapse_rates = lapse_rates_map.sel(latitude=point_pos[0], longitude=point_pos[1], method='nearest')
-        df_lapse = lapse_rates.to_dataframe().reset_index()
-        df_lapse = df_lapse.drop(['lapse rates all','year'],axis=1).drop_duplicates()
-        df_lapse['month']+=1
+        df_lapse = lapse_rates['lapse rates mean'].to_dataframe()*1000
 
         deltaGMT = np.ceil(lon / 15.0)
         mindate_dt_GMT = mindate_dt - datetime.timedelta(hours = deltaGMT)  #get GMT times, to use for filtering ERA5L data
@@ -119,8 +115,8 @@ if True:
         
         h_ERA5L = height.sel(latitude=point_pos[0], longitude=point_pos[1], method='nearest').z.values
         h_dem = points_df.elev_m.iloc[index-1]
-           #Change in Temps due to lapse rates
-           
+        
+        
         out_ds = ds.sel(latitude=point_pos[0], longitude=point_pos[1], method='nearest').sel(time=slice(mindate_dt_GMT,maxdate_dt_GMT)).compute()
         df_out = out_ds.to_dataframe().reset_index()
         df_out['hour'] = df_out.time.dt.hour
@@ -128,14 +124,16 @@ if True:
         df_out = pd.merge(df_out,df_lapse,on=['hour','month'])   #merge on the lapse rates based on month and hour!
         df_out['delta_T'] =  ((h_dem-h_ERA5L))*df_out['lapse rates mean']
 
+           
+        out_ds = ds.sel(latitude=point_pos[0], longitude=point_pos[1], method='nearest').sel(time=slice(mindate_dt_GMT,maxdate_dt_GMT)).compute()
+        df_out = out_ds.to_dataframe().reset_index()
 
-
-
-        df_out['sp'] = barometric_p(df_out['sp'],h_dem-h_ERA5L,df_out.t2m,df_out['lapse rates mean'])
+        df_out['sp'] = barometric_p(df_out['sp'],h_dem-h_ERA5L,df_out.t2m)
         df_out['Ws'] = (df_out['u10']**2 + df_out['v10']**2)**(0.5)  #wind speed
         
-        df_out['t2m'] = df_out['t2m']+df_out['delta_T']
+        df_out['t2m'] = df_out['t2m']+df_out['delta_T']   #apply T lapse rate  
         df_out['d2m'] = df_out['d2m']+df_out['delta_T']
+
         
         #############deal with accummulated variables (https://confluence.ecmwf.int/pages/viewpage.action?pageId=197702790)
         df_out['strd_mod'] = df_out['strd'].diff()/3600
@@ -153,16 +151,10 @@ if True:
         df_out.loc[mask, 'tp_mod'] = df_out.loc[mask, 'tp'] *1000
         df_out.tp = df_out.tp_mod
 
-        
-
-        
         df_out = df_out.drop(['u10','v10','longitude_x','latitude_x','longitude_y','latitude_y','ssrd_mod',
                               'strd_mod','tp_mod','hour','month','lapse rates mean','delta_T'],axis=1)
         df_out.time = df_out.time + datetime.timedelta(hours=deltaGMT)
         df_out = df_out.iloc[1:]    # drop first row, has Nans for accummulated variables ()
-
-
-        print(df_out.head(5))
         df_out.to_parquet(f'{root}/Forcing_data/{Id}/{index}.parquet',index=False)
         index+=1 
         #print(index)

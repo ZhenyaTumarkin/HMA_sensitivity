@@ -22,22 +22,33 @@ conda activate HMA
 
 code_root="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing"
 
-python ${code_root}/create_file_sys.py
+
 if [ -n "$outlocation" ]; then
     echo "outlocation provided : $outlocation"
+    python ${code_root}/create_file_sys.py --outlocation $outlocation
     python ${code_root}/extract_points_kmeans.py --rgiid $rgiid --N_points $num_points --outlocation $outlocation
+    python ${code_root}/extract_ERA5L.py --rgiid $rgiid --datemin $datemin --datemax $datemax --outlocation $outlocation
+    matlab -nodesktop -nojvm -nosplash -r "clear all;Id = '$rgiid'; outlocation='$outlocation'; \
+    run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/temp_tdew_press/relative_humidity_calc.m');\
+    clear all;glacier_id = '$rgiid';outlocation='$outlocation';\
+    run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/Radiation_split/Radiation_Partition_ERA5_point.m')\
+    ;exit;"
 else
-    python ${code_root}/extract_points_kmeans.py --rgiid $rgiid --N_points $num_points 
     echo "no outlocation"
+    python ${code_root}/create_file_sys.py
+    python ${code_root}/extract_points_kmeans.py --rgiid $rgiid --N_points $num_points 
+    python ${code_root}/extract_ERA5L.py --rgiid $rgiid --datemin $datemin --datemax $datemax
+    matlab -nodesktop -nojvm -nosplash -r "clear all;Id = '$rgiid'; \
+    run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/temp_tdew_press/relative_humidity_calc.m');\
+    clear all;glacier_id = '$rgiid';\
+    run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/Radiation_split/Radiation_Partition_ERA5_point.m')\
+    ;exit;"
+    
 fi
-python ${code_root}/extract_ERA5L.py --rgiid $rgiid --datemin $datemin --datemax $datemax
 
 
-matlab -nodesktop -nojvm -nosplash -r "clear all;Id = '$rgiid'; \
-run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/temp_tdew_press/relative_humidity_calc.m');\
-clear all;glacier_id = '$rgiid';\
-run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/preprocessing/Radiation_split/Radiation_Partition_ERA5_point.m')\
-;exit;"
 
-# exit
+
+
+exit
 

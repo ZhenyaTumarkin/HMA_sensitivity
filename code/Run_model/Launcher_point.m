@@ -9,7 +9,9 @@ run_path   = '/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model';
 % point_id = 9; 
 %precip_tune = 0.5;   %factor to multiply precipitation by
 point_id = str2num(point_id);
-data_path  = strcat('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/All_glaciers/',glacier_id);
+
+
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -29,6 +31,18 @@ study_name = 'single_point_run';
 
 % How to store outputs %%%%
 output_daily = 1;  % Recommended for long-term simulations (> 10-20 years, otherwise data volume is too important)
+
+
+% Create the directy where model outputs will be stored
+if ~exist('rootfolder','var')
+    disp('standard_out_loc chosen: data/Outputs/')
+    outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
+    data_path  = strcat('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/Forcing_data/',glacier_id);
+else
+    outlocation = [rootfolder '/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
+    data_path  = strcat(rootfolder,'/Forcing_data/',glacier_id);
+end
+
 
 
 %%%
@@ -90,12 +104,6 @@ hSTL = 0.003; %m
 Albsno_method = 5; % 3 doesn't work, 4 is Brock 2000, 5 is Ding 2017
  
 
-% Create the directy where model outputs will be stored
-
-if ~exist('outlocation','var')
-    disp('standard_out_loc chosen: data/Outputs/')
-    outlocation = ['/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/Outputs/'  glacier_id '/run_' num2str(precip_tune,'%.3f') ];
-end
 if ~exist(outlocation, 'dir'); mkdir(outlocation); addpath(genpath(outlocation)); end
 out = strcat(outlocation,'/point_run_',num2str(point_id),'.mat');%file path initial conditions
 disp(outlocation)
@@ -172,7 +180,7 @@ Zbas = glacier_points.elev_m(point_id);
 
 %% FORCING
 
-forcing_all = parquetread(strcat(data_path,'/ERA5L_radiation_partitioned/',num2str(point_id),'.parquet'),VariableNames=["time","PP","Ws","Sp","Lwin","RH","Ta","SAD1","SAD2","SAB1","SAB2","PARB","PARD"]); % Load forcing table for the current POI
+forcing_all = parquetread(strcat(data_path,'/',num2str(point_id),'.parquet'),VariableNames=["time","PP","Ws","Sp","Lwin","RH","Ta","SAD1","SAD2","SAB1","SAB2","PARB","PARD"]); % Load forcing table for the current POI
 Date_all = forcing_all.time;
 if ~exist('date_start','var')
     date_start = Date_all(1);
@@ -214,7 +222,9 @@ clear d1 d2
 Oa= 210000;% Intercellular Partial Pressure Oxygen [umolO2/mol]
 %narrow down period of forcing data
 forcing = forcing_all(x1:x2,:);
+
 NN= height(forcing);%%% time Step
+disp(NN)
 
 %height of virtual station
 zatm_hourly = repmat(2.00,height(forcing),1);
@@ -505,7 +515,7 @@ Outputs_d.Pr_sno = Outputs_ds.Pr_sno;
 Outputs_t = timetable2table(Outputs_d);
 
 end 
-
+disp(strcat(outlocation,'/',num2str(point_id),'_results.parquet'))
 parquetwrite( strcat(outlocation,'/',num2str(point_id),'_results.parquet'),Outputs_t)
 writetable(Param_t, strcat(outlocation,'/',num2str(point_id),'_param.txt') )
 

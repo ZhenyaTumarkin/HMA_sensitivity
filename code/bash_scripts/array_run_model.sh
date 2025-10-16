@@ -18,7 +18,7 @@
 
 # Define the number of hours the job should run. 
 # Maximum runtime is limited to 10 days, ie. 240 hours
-#SBATCH --time=00-00:15
+#SBATCH --time=00-05:00
 #SBATCH --constraint=matlab
 
 # Define the amount of RAM used by your job in GigaBytes
@@ -30,7 +30,9 @@
 
 # Do not export the local environment to the compute nodes
 #SBATCH --export=NONE
-set -euo pipefail
+
+
+# set -euo pipefail   #stop ass soon as failure
 unset SLURM_EXPORT_ENV
 source /etc/profile
 
@@ -39,8 +41,12 @@ source /etc/profile
 module load matlab/R2024b
 
 
+if [ -n "${outlocation:-}" ]; then 
+    csv_file="${outlocation}/run_list.csv"
+else
+    csv_file="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/run_list.csv"
+fi
 
-csv_file="/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/data/preprocessing/run_list.csv"
 
 first_col=()
 second_col=()
@@ -52,22 +58,40 @@ done < <(tail -n +2 "$csv_file")
 echo "${first_col[@]}"
 echo "${SLURM_ARRAY_TASK_ID}"
 
-rgiid=${first_col[${SLURM_ARRAY_TASK_ID}-1]}
-point_id=${second_col[${SLURM_ARRAY_TASK_ID}-1]}
+if [ -z "${jobs:-}" ]; then
+echo "if"
+jobs=1
+fi 
 
+echo "$jobs"
+
+for casenumber in $(seq 1 $jobs)
+do
+index=$(($casenumber-1+(${SLURM_ARRAY_TASK_ID}-1)*$jobs))
+echo "$index"
+# index=$((${SLURM_ARRAY_TASK_ID}-1))
+rgiid=${first_col[$index]}
+point_id=${second_col[$index]}
+
+if [ -z "${rgiid:-}" ]; then
+    break
+fi
 
 
 if [ -n "${outlocation:-}" ]; then   #check if outlocation set previously
     echo "outlocation exists!"
     
-    srun --cpu_bind=verbose matlab -nodesktop -nojvm -nosplash -r "clear all;\
-    glacier_id='$rgiid'; point_id='$point_id'; outlocation='$outlocation';\
+    matlab -nodesktop -nojvm -nosplash -r "clear all;\
+    glacier_id='$rgiid'; point_id='$point_id'; rootfolder='$outlocation';\
     run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model/Launcher_point.m');\
     exit;"
 else
 echo "no outlocation"
-    srun --cpu_bind=verbose matlab -nodesktop -nojvm -nosplash -r "clear all;\
+    matlab -nodesktop -nojvm -nosplash -r "clear all;\
     glacier_id='$rgiid'; point_id='$point_id';\
     run('/nfs/scistore18/pelligrp/etumarki/HMA_sensitivity/code/Run_model/Launcher_point.m');\
     exit;"
 fi
+
+done
+
